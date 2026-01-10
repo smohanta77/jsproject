@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  /* NEW: Clean, High-Tech Palette */
+  --color-charcoal: #0f172a;       /* Darker, richer navy-black */
+  --color-burnt-orange: #2563eb;   /* CHANGED to "Electric Blue" for a tech feel */
+  --color-off-white: #ffffff;      /* Pure white for freshness */
+  --color-light-gray: #f8fafc;     /* Subtle background tint */
+
+  /* Fonts remain the same, they are good */
+  --font-sans: var(--font-inter); 
+  --font-heading: var(--font-montserrat);
+}
+
+/* Update the Gradient to be lighter and airier */
+.hero-gradient {
+  background: linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.3)), url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80');
+  background-size: cover;
+  background-position: center;
+}
+
+/* Add this for the "Glass" effect */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.03em; /* Tighter letter spacing looks more modern */
+}
