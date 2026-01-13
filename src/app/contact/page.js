@@ -1,116 +1,242 @@
 "use client";
 
-import { Mail, Phone, MapPin, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 
 export default function ContactPage() {
-  
-  // Simple handler to show interaction (In a real app, send this to a backend)
-  const handleSubmit = (e) => {
+  const [status, setStatus] = useState(null); // 'submitting', 'success', 'error'
+  const [errors, setErrors] = useState({});
+
+  // ✅ CORRECT URL (Ends in /formResponse)
+  const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScJZZLgboxTCMlNgHJ_9xv4e-U2fpSmBPmrR_LfZRXu9NKXow/formResponse";
+
+  const validateForm = (formData) => {
+    let newErrors = {};
+    let isValid = true;
+
+    // Regex: First Letter Capital, No numbers
+    const nameRegex = /^[A-Z][a-zA-Z\s]*$/;
+
+    // 1. First Name Validation
+    const firstName = formData.get('firstName');
+    if (!firstName || !nameRegex.test(firstName)) {
+      newErrors.firstName = "Must start with Capital letter & have no numbers";
+      isValid = false;
+    }
+
+    // 2. Last Name Validation
+    const lastName = formData.get('lastName');
+    if (!lastName || !nameRegex.test(lastName)) {
+      newErrors.lastName = "Must start with Capital letter & have no numbers";
+      isValid = false;
+    }
+
+    // 3. Phone Validation (10 digits)
+    const phone = formData.get('phone');
+    if (!phone || !/^\d{10}$/.test(phone)) {
+      newErrors.phone = "Phone number must be exactly 10 digits";
+      isValid = false;
+    }
+
+    // 4. Email Validation
+    const email = formData.get('email');
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Thank you! We will contact you within 24 hours.");
+    const formData = new FormData(e.target);
+
+    // Run Validation
+    if (!validateForm(formData)) {
+      return;
+    }
+
+    setStatus('submitting');
+    
+    const data = new URLSearchParams();
+    // YOUR ENTRY IDs
+    data.append("entry.1211829476", formData.get("firstName"));
+    data.append("entry.1350038236", formData.get("lastName"));
+    data.append("entry.1811446448", formData.get("email"));
+    data.append("entry.1404014767", formData.get("phone"));
+    data.append("entry.999447275", formData.get("projectType"));
+    data.append("entry.623381691", formData.get("message"));
+
+    try {
+      await fetch(GOOGLE_FORM_URL, {
+        method: "POST",
+        body: data,
+        mode: "no-cors",
+      });
+      setStatus('success');
+      e.target.reset();
+      setErrors({});
+    } catch (error) {
+      console.error("Error:", error);
+      setStatus('error');
+    }
   };
 
   return (
-    <div className="min-h-screen bg-off-white pt-24 pb-20">
+    <main className="min-h-screen bg-gray-50 pt-20 pb-20">
       
-      {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 mb-16 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-charcoal mb-4">Get in Touch</h1>
-        <p className="text-gray-600 max-w-xl mx-auto">
-          Ready to transform your workspace? Visit our studio in Indiranagar or fill out the form below.
+      {/* Header Section */}
+      <div className="text-center mb-16 px-4">
+        <h1 className="text-5xl font-bold text-charcoal mb-4">Get in Touch</h1>
+        <p className="text-gray-500 max-w-xl mx-auto">
+          Whether you have a bare shell or need a renovation, we are here to help.
         </p>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-12">
         
-        {/* Left Column: Contact Info & Map */}
-        <div className="space-y-8">
+        {/* Left Column: Contact Info Cards */}
+        <div className="space-y-6 lg:col-span-1">
           
-          {/* Info Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <Phone className="text-burnt-orange mb-3" size={28} />
-              <h3 className="font-bold text-charcoal mb-1">Phone</h3>
-              <p className="text-gray-600">+91 98765 43210</p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <Mail className="text-burnt-orange mb-3" size={28} />
-              <h3 className="font-bold text-charcoal mb-1">Email</h3>
-              <p className="text-gray-600">sudhhigroup@gmail.com</p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
-              <div className="flex items-start">
-                <MapPin className="text-burnt-orange mr-4 shrink-0" size={28} />
-                <div>
-                  <h3 className="font-bold text-charcoal mb-1">Office Address</h3>
-                  <p className="text-gray-600">#42, 100ft Road, Indiranagar, Bengaluru - 560038</p>
-                </div>
-              </div>
-            </div>
+          {/* VISIT US CARD (With Google Maps Link) */}
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 transition-transform hover:-translate-y-1 hover:shadow-md">
+            <MapPin className="text-burnt-orange mb-4" size={32} />
+            <h3 className="text-xl font-bold text-charcoal mb-2">Visit Us</h3>
+            <a 
+              href="https://www.google.com/maps/search/..." 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-gray-500 hover:text-burnt-orange transition-colors block leading-relaxed"
+            >
+              #42, 100ft Road,<br/>
+              Indiranagar, Bengaluru - 560038
+            </a>
           </div>
 
-          {/* Google Map Embed */}
-          <div className="h-64 w-full rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-            <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3888.001696423075!2d77.6392093750764!3d12.971762987343516!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae16a9d9c6f6e3%3A0x6b4b4b4b4b4b4b4b!2sIndiranagar%20100ft%20Road!5e0!3m2!1sen!2sin!4v1708500000000!5m2!1sen!2sin" 
-              width="100%" 
-              height="100%" 
-              style={{border:0}} 
-              allowFullScreen="" 
-              loading="lazy" 
-              referrerPolicy="no-referrer-when-downgrade"
-            ></iframe>
+          {/* CALL US CARD */}
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <Phone className="text-burnt-orange mb-4" size={32} />
+            <h3 className="text-xl font-bold text-charcoal mb-2">Call Us</h3>
+            <p className="text-gray-500 mb-2">+91 93370 16561</p>
+            <p className="text-gray-400 text-sm">Mon-Sat, 9am to 7pm</p>
           </div>
+
+          {/* EMAIL US CARD */}
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <Mail className="text-burnt-orange mb-4" size={32} />
+            <h3 className="text-xl font-bold text-charcoal mb-2">Email Us</h3>
+            <p className="text-gray-500">hello@sudhhigroup.in</p>
+          </div>
+
         </div>
 
-        {/* Right Column: The Form */}
-        <div className="bg-white p-8 md:p-10 rounded-2xl shadow-lg border border-gray-100">
-          <h2 className="text-2xl font-bold text-charcoal mb-6">Send us a Message</h2>
+        {/* Right Column: The Form (Using your working logic) */}
+        <div className="lg:col-span-2 bg-white p-8 md:p-12 rounded-3xl shadow-xl border border-gray-100">
           
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
-                <input type="text" className="w-full p-3 bg-off-white border border-gray-200 rounded-lg focus:outline-none focus:border-burnt-orange transition-colors" required />
+          {status === 'success' ? (
+            <div className="h-full flex flex-col justify-center items-center text-center py-20">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                <span className="text-green-600 text-4xl">✓</span>
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
-                <input type="text" className="w-full p-3 bg-off-white border border-gray-200 rounded-lg focus:outline-none focus:border-burnt-orange transition-colors" required />
-              </div>
+              <h3 className="text-3xl font-bold text-charcoal mb-4">Message Received!</h3>
+              <p className="text-gray-500 max-w-md">
+                Thank you for reaching out. Our design team will review your requirements and call you within 24 hours.
+              </p>
+              <button 
+                onClick={() => setStatus(null)} 
+                className="mt-8 text-burnt-orange font-bold hover:underline"
+              >
+                Send another message
+              </button>
             </div>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold text-charcoal mb-8">Send us a Message</h2>
+              <form onSubmit={handleSubmit} noValidate className="space-y-6">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* First Name */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
+                    <input 
+                      name="firstName" type="text" placeholder="e.g. Rahul"
+                      className={`w-full p-4 bg-gray-50 border rounded-xl focus:border-burnt-orange outline-none transition-colors ${errors.firstName ? 'border-red-500' : 'border-gray-200'}`}
+                      required 
+                    />
+                    {errors.firstName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.firstName}</p>}
+                  </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-              <input type="email" className="w-full p-3 bg-off-white border border-gray-200 rounded-lg focus:outline-none focus:border-burnt-orange transition-colors" required />
-            </div>
+                  {/* Last Name */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
+                    <input 
+                      name="lastName" type="text" placeholder="e.g. Sharma"
+                      className={`w-full p-4 bg-gray-50 border rounded-xl focus:border-burnt-orange outline-none transition-colors ${errors.lastName ? 'border-red-500' : 'border-gray-200'}`}
+                      required 
+                    />
+                    {errors.lastName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.lastName}</p>}
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
-              <input type="tel" className="w-full p-3 bg-off-white border border-gray-200 rounded-lg focus:outline-none focus:border-burnt-orange transition-colors" />
-            </div>
+                {/* Email & Phone */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                    <input 
+                      name="email" type="email" placeholder="rahul@gmail.com"
+                      className={`w-full p-4 bg-gray-50 border rounded-xl focus:border-burnt-orange outline-none transition-colors ${errors.email ? 'border-red-500' : 'border-gray-200'}`}
+                      required 
+                    />
+                    {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email}</p>}
+                  </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Project Type</label>
-              <select className="w-full p-3 bg-off-white border border-gray-200 rounded-lg focus:outline-none focus:border-burnt-orange transition-colors">
-                <option>Full Office Design</option>
-                <option>Renovation</option>
-                <option>Furniture Sourcing</option>
-                <option>Consultation Only</option>
-              </select>
-            </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                    <input 
+                      name="phone" type="tel" placeholder="9988776655"
+                      className={`w-full p-4 bg-gray-50 border rounded-xl focus:border-burnt-orange outline-none transition-colors ${errors.phone ? 'border-red-500' : 'border-gray-200'}`}
+                      required 
+                    />
+                    {errors.phone && <p className="text-red-500 text-xs mt-1 ml-1">{errors.phone}</p>}
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Message</label>
-              <textarea rows="4" className="w-full p-3 bg-off-white border border-gray-200 rounded-lg focus:outline-none focus:border-burnt-orange transition-colors"></textarea>
-            </div>
+                {/* Project Type */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Interested In</label>
+                  <select name="projectType" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-burnt-orange outline-none cursor-pointer">
+                    <option>Full Office Design</option>
+                    <option>Office Renovation</option>
+                    <option>Furniture & Decor</option>
+                    <option>Just Consulting</option>
+                  </select>
+                </div>
 
-            <button type="submit" className="w-full bg-burnt-orange text-white font-bold py-4 rounded-lg hover:bg-orange-600 transition-all shadow-md">
-              Send Message
-            </button>
-          </form>
+                {/* Message */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Tell us about your project</label>
+                  <textarea 
+                    name="message" rows="5" placeholder="Approx area size, location, requirements..."
+                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-burnt-orange outline-none resize-none"
+                  ></textarea>
+                </div>
+
+                <button 
+                  type="submit" 
+                  disabled={status === 'submitting'}
+                  className="w-full bg-burnt-orange text-white text-lg font-bold py-4 rounded-xl hover:bg-orange-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {status === 'submitting' ? 'Sending Request...' : 'Submit Request'}
+                </button>
+
+              </form>
+            </>
+          )}
         </div>
 
       </div>
-    </div>
+    </main>
   );
 }
